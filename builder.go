@@ -1,6 +1,6 @@
 package dsbldr
 
-// Builder is main type for running
+// Builder is main type for this tool, holds all of the
 type Builder struct {
 	BaseURL  string // Base social API url to use
 	Primary  PrimaryFeature
