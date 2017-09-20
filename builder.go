@@ -66,7 +66,7 @@ func (b *Builder) AddFeatures(features ...*Feature) {
 
 // GetFeature returns a feature in the detaset based on it's name
 func (b *Builder) GetFeature(name string) *Feature {
-	if val, ok := b.FeatureMap["name"]; ok {
+	if val, ok := b.FeatureMap[name]; ok {
 		return val
 	}
 	return nil
