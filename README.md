@@ -19,6 +19,10 @@ To be totally honest, I'm very new to the Machine Learning space but I've been l
     - [ ] CSV
     - [ ] JSON
     - ...
+- [ ] Support for different API data formats
+    - [ ] JSON
+    - [ ] XML
+    - ...
 - [ ] Authentication
 - [ ] Command line functionality
 - [ ] Demo
