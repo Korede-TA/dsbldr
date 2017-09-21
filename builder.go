@@ -18,9 +18,9 @@ type Builder struct {
 
 // NewBuilder creates new Builder struct
 func NewBuilder(features, recordCount int) *Builder {
-	preallocatedData := make([][]string, features)
+	preallocatedData := make([][]string, recordCount)
 	for i := range preallocatedData {
-		preallocatedData[i] = make([]string, recordCount)
+		preallocatedData[i] = make([]string, features)
 	}
 	return &Builder{
 		data: preallocatedData,
