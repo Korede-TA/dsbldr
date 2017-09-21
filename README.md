@@ -1,5 +1,5 @@
 # dsbldr
-Golang tool that makes it easier to build Machine Learning Datasets from public Social Network APIs. It's fairly low level; primarily helps out with maintaining concurreny and saving data under the hood -- while providing a straightforward and intuitive API to do so.
+Golang tool that makes it easier to build Machine Learning Datasets from public Social Network APIs. It's fairly low level; primarily helps out with managing concurrent operations and saving data under the hood -- while providing a straightforward and intuitive API to do so.
 
 ## Abstract
 (Don't know if people actually write these for OSS projects)
