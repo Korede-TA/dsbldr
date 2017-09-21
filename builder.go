@@ -2,6 +2,7 @@ package dsbldr
 
 import (
 	"io"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -10,6 +11,7 @@ type Builder struct {
 	BaseURL        string
 	RequestHeaders map[string]string // Manually written Request Header (including auth)
 	FeatureMap     map[string]*Feature
+	dataMap        map[string][]string
 	data           [][]string // Strings of Data to be read in to CSV
 	request        http.Request
 }
@@ -46,6 +48,8 @@ func (b *Builder) Run() error {
 			return err
 		}
 		resp, err := client.Do(req)
+		output := feature.RunFunc(ioutil.ReadAll(resp.Body))
+		b.dataMap[feature.Name] = output
 	}
 	return nil
 }
