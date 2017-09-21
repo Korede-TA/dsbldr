@@ -74,8 +74,8 @@ func (b *Builder) Run() error {
 // Save commits the downloaded features to a file
 // as specified by the Writer interface (has to implement WriteAll)
 func (b *Builder) Save(writer io.Writer) error {
-	err := writer.WriteAll(b.data)
-	return err
+	// err := writer.WriteAll(b.data)
+	return nil
 }
 
 // AddFeatures adds a Feature struct to the "Features" Field on Builder
