@@ -10,7 +10,7 @@ import (
 type Builder struct {
 	BaseURL        string
 	RequestHeaders map[string]string // Manually written Request Header (including auth)
-	FeatureMap     map[string]*Feature
+	featureMap     map[string]*Feature
 	dataMap        map[string][]string
 	data           [][]string // Strings of Data to be read in to CSV
 	request        http.Request
@@ -27,6 +27,23 @@ func NewBuilder(features, recordCount int) *Builder {
 	}
 }
 
+func (b *Builder) addDataFeature(featureName string, values []string) error {
+	// First row is table headers
+	var colIndex int
+	for i := range b.data[0] {
+		if b.data[0][i] == "" {
+			colIndex = i
+			b.data[0][i] = featureName
+			break
+		}
+	}
+	// Add all the values as well (remember that Builder.data is pre-allocated)
+	for i := 1; i < len(b.data); i++ {
+		b.data[i][colIndex] = values[i]
+	}
+	return nil
+}
+
 func (b *Builder) createClientAndRequest(endpoint string, headers map[string]string) (*http.Client, *http.Request, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", b.BaseURL+endpoint, nil)
@@ -36,20 +53,20 @@ func (b *Builder) createClientAndRequest(endpoint string, headers map[string]str
 	return client, req, err
 }
 
-// Init initializes the Builder
-func (b *Builder) Init() {
-}
-
 // Run Builder to aggregate all features and manage concurrent operations
 func (b *Builder) Run() error {
-	for _, feature := range b.FeatureMap {
+	for _, feature := range b.featureMap {
 		client, req, err := b.createClientAndRequest(feature.Endpoint, b.RequestHeaders)
 		if err != nil {
 			return err
 		}
 		resp, err := client.Do(req)
-		output := feature.RunFunc(ioutil.ReadAll(resp.Body))
-		b.dataMap[feature.Name] = output
+		parsedResponse, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		output := feature.RunFunc(string(parsedResponse))
+		b.addDataFeature(feature.Name, output)
 	}
 	return nil
 }
@@ -64,13 +81,13 @@ func (b *Builder) Save(writer io.Writer) error {
 // AddFeatures adds a Feature struct to the "Features" Field on Builder
 func (b *Builder) AddFeatures(features ...*Feature) {
 	for _, feature := range features {
-		b.FeatureMap[feature.Name] = feature
+		b.featureMap[feature.Name] = feature
 	}
 }
 
 // GetFeature returns a feature in the detaset based on it's name
 func (b *Builder) GetFeature(name string) *Feature {
-	if val, ok := b.FeatureMap[name]; ok {
+	if val, ok := b.featureMap[name]; ok {
 		return val
 	}
 	return nil
