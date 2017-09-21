@@ -19,6 +19,7 @@ To be totally honest, I'm very new to the Machine Learning space but I've been l
     - [ ] CSV
     - [ ] JSON
     - ...
-- [ ] A file that contains 
+- [ ] Authentication
+- [ ] Command line functionality
 - [ ] Demo
 - (Other stuff as it comes to mind, please feel free to make suggestions) ...
