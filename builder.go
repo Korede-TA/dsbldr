@@ -9,7 +9,7 @@ import (
 // Builder is main type for this tool.
 type Builder struct {
 	BaseURL        string
-	RequestHeaders map[string]string // Request Headers including auth
+	RequestHeaders map[string]string // Custom Request Headers including auth
 	featureMap     map[string]*Feature
 	data           [][]string // Strings of Data to be read in to CSV
 }
@@ -93,8 +93,10 @@ func (b *Builder) AddFeatures(features ...*Feature) {
 
 // GetFeature returns a feature in the detaset based on it's name
 func (b *Builder) GetFeature(name string) *Feature {
+	var feat *Feature
 	if val, ok := b.featureMap[name]; ok {
-		return val
+		feat = val
+		return feat
 	}
-	return nil
+	return feat
 }

@@ -43,3 +43,30 @@ func TestAddFeature(t *testing.T) {
 		t.Fatalf("got: %v\n want: %v\n ", got, want)
 	}
 }
+
+func TestGetFeature(t *testing.T) {
+	f := &Feature{
+		Name:     "feat1",
+		Endpoint: "/endpoint1/",
+		RunFunc: func(res string) []string {
+			return []string{"one", "two", "three"}
+		},
+	}
+	b := NewBuilder(4, 3)
+	b.AddFeatures(f)
+	if got, want := b.GetFeature("feat1"), f; got != want {
+		t.Fatalf("got: %v\n want: %v\n ", got, want)
+	}
+}
+
+func TestGetFeatureIfNoFeatures(t *testing.T) {
+	var NilFeature *Feature
+	b := NewBuilder(4, 3)
+	if got, want := b.GetFeature("feat1"), NilFeature; got != want {
+		t.Fatalf("got: %v\n want: %v\n ", got, want)
+	}
+}
+
+func TestRun(t *testing.T) {
+
+}
