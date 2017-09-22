@@ -40,10 +40,6 @@ func (b *Builder) addDataFeature(featureName string, values []string) error {
 		}
 	}
 	// Add all the values as well (remember that Builder.data is pre-allocated)
-	// for i := 1; i < len(b.data); i++ {
-	// 	// fmt.Printf("%v", values[i])
-	//
-	// }
 	for i := 1; i < len(b.data); i++ {
 		b.data[i][colIndex] = values[i-1]
 	}
