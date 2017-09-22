@@ -17,10 +17,11 @@ type Builder struct {
 }
 
 // NewBuilder creates new Builder struct
-func NewBuilder(features, recordCount int) *Builder {
-	preallocatedData := make([][]string, recordCount)
+func NewBuilder(featureCount, recordCount int) *Builder {
+	// Add extra row for header
+	preallocatedData := make([][]string, recordCount+1)
 	for i := range preallocatedData {
-		preallocatedData[i] = make([]string, features)
+		preallocatedData[i] = make([]string, featureCount)
 	}
 	return &Builder{
 		data: preallocatedData,
@@ -31,6 +32,7 @@ func (b *Builder) addDataFeature(featureName string, values []string) error {
 	// First row is table headers
 	var colIndex int
 	for i := range b.data[0] {
+		// Find first empty column
 		if b.data[0][i] == "" {
 			colIndex = i
 			b.data[0][i] = featureName
@@ -38,8 +40,12 @@ func (b *Builder) addDataFeature(featureName string, values []string) error {
 		}
 	}
 	// Add all the values as well (remember that Builder.data is pre-allocated)
+	// for i := 1; i < len(b.data); i++ {
+	// 	// fmt.Printf("%v", values[i])
+	//
+	// }
 	for i := 1; i < len(b.data); i++ {
-		b.data[i][colIndex] = values[i]
+		b.data[i][colIndex] = values[i-1]
 	}
 	return nil
 }
