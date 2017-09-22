@@ -8,17 +8,11 @@ package dsbldr
 // then spit it back as an array of strings to read to CSV or JSON
 type RunFunc func(response string) []string // parents map[string]string
 
-// const (
-// 	EmptyFeature = iota
-// 	FullFeature
-// )
-
 // Feature in the dataset, on which all other features are based on
 type Feature struct {
 	Name     string
 	Endpoint string // API Endpoint
 	RunFunc  RunFunc
-	// status   int
 }
 
 // NewFeature creates new Feature with defaults
