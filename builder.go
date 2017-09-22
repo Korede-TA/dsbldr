@@ -11,9 +11,7 @@ type Builder struct {
 	BaseURL        string
 	RequestHeaders map[string]string // Manually written Request Header (including auth)
 	featureMap     map[string]*Feature
-	dataMap        map[string][]string
 	data           [][]string // Strings of Data to be read in to CSV
-	request        http.Request
 }
 
 // NewBuilder creates new Builder struct
@@ -24,7 +22,9 @@ func NewBuilder(featureCount, recordCount int) *Builder {
 		preallocatedData[i] = make([]string, featureCount)
 	}
 	return &Builder{
-		data: preallocatedData,
+		RequestHeaders: make(map[string]string),
+		featureMap:     make(map[string]*Feature),
+		data:           preallocatedData,
 	}
 }
 
