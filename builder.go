@@ -9,7 +9,7 @@ import (
 // Builder is main type for this tool.
 type Builder struct {
 	BaseURL        string
-	RequestHeaders map[string]string // Manually written Request Header (including auth)
+	RequestHeaders map[string]string // Request Headers including auth
 	featureMap     map[string]*Feature
 	data           [][]string // Strings of Data to be read in to CSV
 }
@@ -46,7 +46,10 @@ func (b *Builder) addDataFeature(featureName string, values []string) error {
 	return nil
 }
 
-func (b *Builder) createClientAndRequest(endpoint string, headers map[string]string) (*http.Client, *http.Request, error) {
+func (b *Builder) createClientAndRequest(
+	endpoint string,
+	headers map[string]string,
+) (*http.Client, *http.Request, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", b.BaseURL+endpoint, nil)
 	for k, v := range headers {
@@ -58,7 +61,8 @@ func (b *Builder) createClientAndRequest(endpoint string, headers map[string]str
 // Run Builder to aggregate all features and manage concurrent operations
 func (b *Builder) Run() error {
 	for _, feature := range b.featureMap {
-		client, req, err := b.createClientAndRequest(feature.Endpoint, b.RequestHeaders)
+		client, req, err := b.createClientAndRequest(
+			feature.Endpoint, b.RequestHeaders)
 		if err != nil {
 			return err
 		}
