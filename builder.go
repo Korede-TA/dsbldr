@@ -89,6 +89,12 @@ func (b *Builder) AddFeatures(features ...*Feature) {
 	for _, feature := range features {
 		b.featureMap[feature.Name] = feature
 	}
+	// Increase size of data if feature map is larger than initially allocated
+	if len(b.featureMap) > len(b.data[0]) {
+		for i := range b.data {
+			b.data[i] = append(b.data[i], "")
+		}
+	}
 }
 
 // GetFeature returns a feature in the detaset based on it's name
