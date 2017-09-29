@@ -41,5 +41,6 @@ type Feature struct {
 func NewFeature() *Feature {
 	return &Feature{
 		noSave: false,
+		status: make(chan int),
 	}
 }
