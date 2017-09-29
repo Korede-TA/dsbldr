@@ -13,10 +13,10 @@ I'm proposing a rather simple solution that, I think would be pretty useful for 
 To be totally honest, I'm very new to the Machine Learning space but I've been learning a lot very quickly and I'm very open to feedback. I've barely started actually writing this but I've been brewing it quite thoroughly in my head and I hope to be able to share something genuinely useful in the coming weeks :)
 
 ## TODO
-- [ ] Top level Feature-based API
+- [x] Top level Feature-based API
 - [ ] Concurrency stuff using Goroutines, channels and all that fun stuff
 - [ ] Saving functionality for different data formats
-    - [ ] CSV
+    - [x] CSV
     - [ ] JSON
     - ...
 - [ ] Support for different API data formats
