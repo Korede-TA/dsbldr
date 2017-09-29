@@ -1,5 +1,9 @@
 package dsbldr
 
+import (
+	"regexp"
+)
+
 // RunFunc holds the computation that processes the API responses to features
 // is sent a JSON string of the response ??as well as a map of data from the features parent features??
 // Basically what you do with the run function is take in a string of
@@ -43,4 +47,18 @@ func NewFeature() *Feature {
 		noSave: false,
 		status: make(chan int),
 	}
+}
+
+// getParentNames returns strings of
+func (f *Feature) getParentNames() ([]string, error) {
+	// parse through using regexp
+	re, err := regexp.Compile(`{{[\w]+}}`)
+	if err != nil {
+		return nil, err
+	}
+	val := re.FindAllString(f.Endpoint, -1)
+	for i := range val {
+		val[i] = val[i][2 : len(val[i])-2] // trim off parentheses
+	}
+	return val, nil
 }
