@@ -8,14 +8,38 @@ package dsbldr
 // then spit it back as an array of strings to read to CSV or JSON
 type RunFunc func(response string) []string // parents map[string]string
 
+// Structs representing RetreiveType
+// SingleRetrieve Features only require one request to create the JSON Dump
+// that's passed to the RunFunc
+// Repeated Retrieve Features require one request per value-set of
+// of parent features that are concatenated into a JSON array and then passed
+// to the Features RunFunc
+// Almost as a given, all dependent features will be of RepeatedRetrieve per
+// value sets of their parent features
+const (
+	SingleRetrieve = iota
+	RepeatedRetrieve
+)
+
+// Feature Download statuses
+const (
+	Ready = iota
+	NotReady
+)
+
 // Feature in the dataset, on which all other features are based on
 type Feature struct {
-	Name     string
-	Endpoint string // API Endpoint
-	RunFunc  RunFunc
+	Name         string
+	Endpoint     string // API Endpoint
+	RunFunc      RunFunc
+	RetrieveType int // Determines if multiple or single requests are made to the api
+	noSave       bool
+	status       chan int // download status of feature
 }
 
 // NewFeature creates new Feature with defaults
 func NewFeature() *Feature {
-	return &Feature{}
+	return &Feature{
+		noSave: false,
+	}
 }
