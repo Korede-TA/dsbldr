@@ -1,6 +1,7 @@
 package dsbldr
 
 import (
+	"fmt"
 	"regexp"
 )
 
@@ -38,21 +39,21 @@ type Feature struct {
 	RunFunc      RunFunc
 	RetrieveType int // Determines if multiple or single requests are made to the api
 	noSave       bool
-	status       chan int // download status of feature
+	finished     chan bool // if feature is finished
 }
 
 // NewFeature creates new Feature with defaults
 func NewFeature() *Feature {
 	return &Feature{
-		noSave: false,
-		status: make(chan int),
+		noSave:   false,
+		finished: make(chan bool, 1),
 	}
 }
 
 // getParentNames returns strings of
 func (f *Feature) getParentNames() ([]string, error) {
 	// parse through using regexp
-	re, err := regexp.Compile(`{{[\w]+}}`)
+	re, err := regexp.Compile(`{{\w+}}`)
 	if err != nil {
 		return nil, err
 	}
@@ -61,4 +62,20 @@ func (f *Feature) getParentNames() ([]string, error) {
 		val[i] = val[i][2 : len(val[i])-2] // trim off parentheses
 	}
 	return val, nil
+}
+
+// resolveEndpoint returns the Endpoint but with the actual parent values for that record inserted
+func (f *Feature) resolveEndpoint(parentsValues map[string]string) (string, error) {
+	toReplace := f.Endpoint
+
+	for k, v := range parentsValues {
+		re, err := regexp.Compile(fmt.Sprintf("\\{\\{%s\\}\\}", k))
+		if err != nil {
+			return "", err
+		}
+		// overwrite toReplace to (kind of) recursively do any replaces
+		toReplace = re.ReplaceAllLiteralString(toReplace, v)
+	}
+
+	return toReplace, nil
 }
