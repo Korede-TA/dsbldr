@@ -1,40 +1,10 @@
 package dsbldr
 
 import (
-	"flag"
-	"fmt"
-	"io"
+	"encoding/csv"
 	"io/ioutil"
 	"net/http"
-	"strings"
 )
-
-// FeatureList is a custom flag type
-type FeatureList []string
-
-// String return value of custom flag type
-func (fl *FeatureList) String() string {
-	return fmt.Sprint(*fl)
-}
-
-// Set value of custom flag type
-func (fl *FeatureList) Set(value string) error {
-	features := strings.Split(value, " ")
-	for _, i := range features {
-		*fl = append(*fl, i)
-	}
-	return nil
-}
-
-var featureList FeatureList
-
-func init() {
-	flag.Var(
-		&featureList,
-		"features",
-		"comma-separated list of features. Defaults to all features",
-	)
-}
 
 // Builder is main type for this tool.
 type Builder struct {
@@ -42,7 +12,7 @@ type Builder struct {
 	RequestHeaders map[string]string // Custom Request Headers including auth
 	featureMap     map[string]*Feature
 	data           [][]string // Strings of Data to be read in to CSV
-	saveFeatures   map[string]bool
+	records        int        // Number of records to be retrieved for dataset
 }
 
 // NewBuilder creates new Builder struct
@@ -56,6 +26,7 @@ func NewBuilder(featureCount, recordCount int) *Builder {
 		RequestHeaders: make(map[string]string),
 		featureMap:     make(map[string]*Feature),
 		data:           preallocatedData,
+		records:        recordCount,
 	}
 }
 
@@ -64,67 +35,43 @@ func (b *Builder) addDataFeature(featureName string, values []string) error {
 	return nil
 }
 
-func (b *Builder) createClientAndRequest(
-	endpoint string,
-	headers map[string]string,
-) (*http.Client, *http.Request, error) {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", b.BaseURL+endpoint, nil)
-	for k, v := range headers {
-		req.Header.Add(k, v)
+func (b *Builder) getDataFeature(featureName string) []string {
+	items := make([]string, b.records-1) // all items excluding header row
+	var colIndex int
+
+	for i := range b.data[0] {
+		// Find first column with same header
+		if b.data[0][i] == featureName {
+			colIndex = i
+			break
+		}
 	}
-	return client, req, err
+
+	// Add all the values as well (remember that Builder.data is pre-allocated)
+	for i := 1; i < len(b.data); i++ {
+		items[i-1] = b.data[i][colIndex]
+	}
+
+	return items
 }
 
-// Run Builder to aggregate all features and manage concurrent operations
-func (b *Builder) Run() error {
-	flag.Parse()
-
-	// Set noSave to true for any features listed in the call
-	for _, i := range ignoredFeatures {
-		b.GetFeature(i).noSave = true
-	}
-
-	for _, feature := range b.featureMap {
-		go func(){
-			// Run operations concurrently here 
-			// (use channels representing download the status 
-			// of each record to get values)
-			// Requests should be cached since several requests 
-			// will have many duplicates (as some will share the same response)
-
-			// TODO: 
-				// - Figure out caching stuff within createClientAndRequest
-				// -- (Maybe just do the caching manually)
-				// - Use channels to make certain download operations 
-				//   wait till the dependent values are loaded
-		}()
-		client, req, err := b.createClientAndRequest(
-			feature.Endpoint, b.RequestHeaders)
-		if err != nil {
-			return err
-		}
-		resp, err := client.Do(req)
-		parsedResponse, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		output := feature.RunFunc(string(parsedResponse))
-		b.addDataFeature(feature.Name, output)
+// GetFeature returns a feature in the detaset based on it's name
+func (b *Builder) GetFeature(name string) *Feature {
+	var feat *Feature
+	if val, ok := b.featureMap[name]; ok {
+		feat = val
+		return feat
 	}
 	return nil
 }
 
 // Save commits the downloaded features to a file
-// as specified by the Writer interface (has to implement WriteAll)
-func (b *Builder) Save(writer io.Writer) error {
-	for _, i := range b.data {
+func (b *Builder) Save(writer csv.Writer) error {
+	for i := range b.data {
 		var record []string
 		for index, j := range b.data[i] {
 			// if data header (feature name) has noSave == false, else don't write
 			if !b.featureMap[b.data[0][index]].noSave {
-				// find out if Golang append acts similarly to lists in pytohn
-				// if not, implement special version in util.go
 				record = append(record, j)
 			}
 		}
@@ -141,9 +88,9 @@ func (b *Builder) AddFeatures(features ...*Feature) {
 	for _, feature := range features {
 		feature.noSave = false
 		b.featureMap[feature.Name] = feature
-		b.saveFeatures[feature.Name] = true
+		// TODO: Return error if feature with same name has been added
 	}
-	// Increase size of data if feature map is larger than initially allocated
+	// Increase size of data matrix if feature map is larger than initially allocated
 	if len(b.featureMap) > len(b.data[0]) {
 		for i := range b.data {
 			b.data[i] = append(b.data[i], "")
@@ -151,12 +98,110 @@ func (b *Builder) AddFeatures(features ...*Feature) {
 	}
 }
 
-// GetFeature returns a feature in the detaset based on it's name
-func (b *Builder) GetFeature(name string) *Feature {
-	var feat *Feature
-	if val, ok := b.featureMap[name]; ok {
-		feat = val
-		return feat
+func (b *Builder) createRequest(
+	endpoint string,
+	headers map[string]string,
+) (*http.Request, error) {
+
+	req, err := http.NewRequest("GET", b.BaseURL+endpoint, nil)
+	if err != nil {
+		return nil, err
 	}
-	return feat
+
+	for k, v := range headers {
+		req.Header.Add(k, v)
+	}
+	return req, nil
+}
+
+// resolve endpoint templates to actual values for endpoints based on parent features
+func (b *Builder) resolveFeatureEndpoints(feature *Feature) ([]string, error) {
+	endpoints := make([]string, b.records)
+	parents, err := feature.getParentNames()
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < b.records; i++ {
+		parentValuesMap := make(map[string]string)
+		for _, j := range parents {
+			parentValuesMap[j] = b.getDataFeature(j)[i]
+		}
+
+	}
+
+	return endpoints, nil
+}
+
+// retrieveFeature returns string dumps of responses and an error if any
+func (b *Builder) retrieveFeature(feature *Feature) ([]string, error) {
+	client := &http.Client{}
+	responses := make([]*http.Response, b.records)
+	responseDumps := make([]string, b.records)
+	endpoints, err := b.resolveFeatureEndpoints(feature)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < b.records; i++ {
+		// endpoints should be the same as the number of
+		req, err := b.createRequest(endpoints[i], b.RequestHeaders)
+		if err != nil {
+			return nil, err
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode == 200 { // OK
+			bodyBytes, _ := ioutil.ReadAll(resp.Body)
+			responseDumps[i] = string(bodyBytes)
+		}
+	}
+
+	return responseDumps, nil
+}
+
+// Run Builder to aggregate all features and manage concurrent operations
+func (b *Builder) Run() error {
+	// flag.Parse()
+
+	// Set noSave to true for any features listed in the call
+	// for _, i := range ignoredFeatures {
+	// 	b.GetFeature(i).noSave = true
+	// }
+
+	for _, feature := range b.featureMap {
+		parents, err := feature.getParentNames()
+		if err != nil {
+			return err
+		}
+
+		var retrieveError error
+		go func(feature *Feature) {
+			for _, i := range parents {
+				// Loop through parent features and wait till
+				// they finish excecuting
+				<-b.GetFeature(i).finished
+			}
+
+			parsedResponses := make([]string, b.records)
+			parsedResponses, retrieveError = b.retrieveFeature(feature)
+
+			output := feature.RunFunc(parsedResponses)
+			b.addDataFeature(feature.Name, output)
+
+			feature.finished <- true // Mark feature as true
+		}(feature)
+
+		if retrieveError != nil {
+			return retrieveError
+		}
+
+	}
+	return nil
 }
