@@ -127,7 +127,11 @@ func (b *Builder) resolveFeatureEndpoints(feature *Feature) ([]string, error) {
 		for _, j := range parents {
 			parentValuesMap[j] = b.getDataFeature(j)[i]
 		}
-
+		var resolveEndpointError error
+		endpoints[i], resolveEndpointError = feature.resolveEndpoint(parentValuesMap)
+		if resolveEndpointError != nil {
+			return nil, resolveEndpointError
+		}
 	}
 
 	return endpoints, nil
