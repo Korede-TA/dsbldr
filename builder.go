@@ -30,12 +30,12 @@ func NewBuilder(featureCount, recordCount int) *Builder {
 	}
 }
 
-func (b *Builder) addDataFeature(featureName string, values []string) error {
+func (b *Builder) addFeatureData(featureName string, values []string) error {
 	writeStringColumn(&b.data, featureName, values)
 	return nil
 }
 
-func (b *Builder) getDataFeature(featureName string) []string {
+func (b *Builder) getFeatureData(featureName string) []string {
 	items := make([]string, b.records-1) // all items excluding header row
 	var colIndex int
 
@@ -47,7 +47,6 @@ func (b *Builder) getDataFeature(featureName string) []string {
 		}
 	}
 
-	// Add all the values as well (remember that Builder.data is pre-allocated)
 	for i := 1; i < len(b.data); i++ {
 		items[i-1] = b.data[i][colIndex]
 	}
@@ -62,7 +61,7 @@ func (b *Builder) GetFeature(name string) *Feature {
 		feat = val
 		return feat
 	}
-	return nil
+	return feat
 }
 
 // Save commits the downloaded features to a file
@@ -100,8 +99,8 @@ func (b *Builder) AddFeatures(features ...*Feature) {
 
 func (b *Builder) createRequest(
 	endpoint string,
-	headers map[string]string,
 ) (*http.Request, error) {
+	headers := b.RequestHeaders
 
 	req, err := http.NewRequest("GET", b.BaseURL+endpoint, nil)
 	if err != nil {
@@ -125,7 +124,7 @@ func (b *Builder) resolveFeatureEndpoints(feature *Feature) ([]string, error) {
 	for i := 0; i < b.records; i++ {
 		parentValuesMap := make(map[string]string)
 		for _, j := range parents {
-			parentValuesMap[j] = b.getDataFeature(j)[i]
+			parentValuesMap[j] = b.getFeatureData(j)[i]
 		}
 		var resolveEndpointError error
 		endpoints[i], resolveEndpointError = feature.resolveEndpoint(parentValuesMap)
@@ -137,10 +136,9 @@ func (b *Builder) resolveFeatureEndpoints(feature *Feature) ([]string, error) {
 	return endpoints, nil
 }
 
-// retrieveFeature returns string dumps of responses and an error if any
-func (b *Builder) retrieveFeature(feature *Feature) ([]string, error) {
+// populateFeatureData returns string dumps of responses and an error if any
+func (b *Builder) populateFeatureData(feature *Feature) ([]string, error) {
 	client := &http.Client{}
-	responses := make([]*http.Response, b.records)
 	responseDumps := make([]string, b.records)
 	endpoints, err := b.resolveFeatureEndpoints(feature)
 	if err != nil {
@@ -149,7 +147,7 @@ func (b *Builder) retrieveFeature(feature *Feature) ([]string, error) {
 
 	for i := 0; i < b.records; i++ {
 		// endpoints should be the same as the number of
-		req, err := b.createRequest(endpoints[i], b.RequestHeaders)
+		req, err := b.createRequest(endpoints[i])
 		if err != nil {
 			return nil, err
 		}
@@ -185,7 +183,7 @@ func (b *Builder) Run() error {
 			return err
 		}
 
-		var retrieveError error
+		var populateError error
 		go func(feature *Feature) {
 			for _, i := range parents {
 				// Loop through parent features and wait till
@@ -194,16 +192,16 @@ func (b *Builder) Run() error {
 			}
 
 			parsedResponses := make([]string, b.records)
-			parsedResponses, retrieveError = b.retrieveFeature(feature)
+			parsedResponses, populateError = b.populateFeatureData(feature)
 
 			output := feature.RunFunc(parsedResponses)
-			b.addDataFeature(feature.Name, output)
+			b.addFeatureData(feature.Name, output)
 
 			feature.finished <- true // Mark feature as true
 		}(feature)
 
-		if retrieveError != nil {
-			return retrieveError
+		if populateError != nil {
+			return populateError
 		}
 
 	}
