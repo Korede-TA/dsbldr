@@ -185,9 +185,8 @@ func (b *Builder) Run() error {
 
 		var populateError error
 		go func(feature *Feature) {
+			// Block till parent features finish executing
 			for _, i := range parents {
-				// Loop through parent features and wait till
-				// they finish excecuting
 				<-b.GetFeature(i).finished
 			}
 
@@ -198,12 +197,18 @@ func (b *Builder) Run() error {
 			b.addFeatureData(feature.Name, output)
 
 			feature.finished <- true // Mark feature as true
+			close(feature.finished)
 		}(feature)
 
 		if populateError != nil {
 			return populateError
 		}
-
 	}
+
+	// wait for all channels to be written before exiting function
+	for _, feature := range b.featureMap {
+		<-feature.finished
+	}
+
 	return nil
 }
