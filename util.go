@@ -31,3 +31,18 @@ func writeStringColumn(data *[][]string, columnName string, values []string) {
 		(*data)[i][colIndex] = values[i-1]
 	}
 }
+
+func readStringColumn(values *[]string, columnName string, data [][]string) {
+	var colIndex int
+	for i := range data[0] {
+		// Find first empty column or column with same header to overwrite
+		if data[0][i] == columnName {
+			colIndex = i
+			break
+		}
+	}
+	// Add all the values as well (remember that Builder.data is pre-allocated)
+	for i := 1; i < len(data); i++ {
+		(*values)[i-1] = data[i][colIndex]
+	}
+}
