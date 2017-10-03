@@ -10,11 +10,11 @@ builder := d.Builder{
 	BaseURL: "localhost:8080",
 	RequestHeaders: map[string]string{
 		"Authorization": BasicOAuthHeader(
-			"oauth_consumer_key",
-			"oauth_nonce",
-			"oauth_signature",
-			"oauth_signature_method", "oauth_timestamp",
-			"oauth_token",
+			"OAUTH_CONSUMER_KEY",
+			"OAUTH_NONCE",
+			"OAUTH_SIGNATURE",
+			"OAUTH_SIGNATURE_METHOD", "OAUTH_TIMESTAMP",
+			"OAUTH_TOKEN",
 		)
 	}
 }
@@ -23,7 +23,7 @@ builder.AddFeatures(
 	&d.Feature{
 		Name: "item_ids",
 		Endpoint: "/items/",
-		RunFunc: func(response string) []string {
+		RunFunc: func(response []string) []string {
 			responseMap = (make[map]string)
 			json.Unmarshal(response, &responseMap)
 		}
@@ -31,7 +31,7 @@ builder.AddFeatures(
 	&d.Feature{
 		Name: "item_prices",
 		Endpoint: "/items/prices/{{item_ids}}/",
-		RunFunc: func(response string) []string {
+		RunFunc: func(response []string) []string {
 			// blah blah
 		}
 	},
