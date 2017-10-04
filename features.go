@@ -26,18 +26,12 @@ const (
 	RepeatedRetrieve
 )
 
-// Feature Download statuses
-const (
-	Ready = iota
-	NotReady
-)
-
 // Feature in the dataset, on which all other features are based on
 type Feature struct {
 	Name         string
-	Endpoint     string // API Endpoint
-	RunFunc      RunFunc
-	RetrieveType int // Determines if multiple or single requests are made to the api
+	Endpoint     string  // API Endpoint
+	RunFunc      RunFunc // function that performs ad-hoc computation
+	RetrieveType int     // Determines if multiple or single requests are made to the api
 	noSave       bool
 	finished     chan bool // if feature is finished
 }
