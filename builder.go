@@ -36,21 +36,11 @@ func (b *Builder) addFeatureData(featureName string, values []string) error {
 }
 
 func (b *Builder) getFeatureData(featureName string) []string {
-	items := make([]string, b.records-1) // all items excluding header row
-	var colIndex int
-
-	for i := range b.data[0] {
-		// Find first column with same header
-		if b.data[0][i] == featureName {
-			colIndex = i
-			break
-		}
+	items := make([]string, b.records-1)
+	if _, ok := b.featureMap[featureName]; ok {
+		readStringColumn(&items, featureName, b.data)
+		return items
 	}
-
-	for i := 1; i < len(b.data); i++ {
-		items[i-1] = b.data[i][colIndex]
-	}
-
 	return items
 }
 
@@ -64,19 +54,40 @@ func (b *Builder) GetFeature(name string) *Feature {
 	return feat
 }
 
+func (b *Builder) writeRecord(writer csv.Writer, i int) error {
+	var record []string
+	for index, j := range b.data[i] {
+		// if data header (feature name) has noSave == false, else don't write
+		if !b.featureMap[b.data[0][index]].noSave {
+			record = append(record, j)
+		}
+	}
+	err := writer.Write(record)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Save commits the downloaded features to a file
 func (b *Builder) Save(writer csv.Writer) error {
 	for i := range b.data {
-		var record []string
-		for index, j := range b.data[i] {
-			// if data header (feature name) has noSave == false, else don't write
-			if !b.featureMap[b.data[0][index]].noSave {
-				record = append(record, j)
-			}
-		}
-		err := writer.Write(record)
+		err := b.writeRecord(writer, i)
 		if err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+// SaveIf daves records only if they evaluate to true
+func (b *Builder) SaveIf(writer csv.Writer, saveCond func(r []string) bool) error {
+	for i := range b.data {
+		if saveCond(b.data[i]) {
+			err := b.writeRecord(writer, i)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -163,6 +174,7 @@ func (b *Builder) populateFeatureData(feature *Feature) ([]string, error) {
 			bodyBytes, _ := ioutil.ReadAll(resp.Body)
 			responseDumps[i] = string(bodyBytes)
 		}
+
 	}
 
 	return responseDumps, nil
