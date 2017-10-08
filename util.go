@@ -34,15 +34,22 @@ func writeStringColumn(data *[][]string, columnName string, values []string) {
 
 func readStringColumn(values *[]string, columnName string, data [][]string) {
 	var colIndex int
+	noMatch := false
 	for i := range data[0] {
-		// Find first empty column or column with same header to overwrite
 		if data[0][i] == columnName {
 			colIndex = i
 			break
 		}
+		if i == len(data) {
+			noMatch = true
+		}
 	}
 	// Add all the values as well (remember that Builder.data is pre-allocated)
 	for i := 1; i < len(data); i++ {
+		if noMatch {
+			(*values)[i-1] = ""
+			continue
+		}
 		(*values)[i-1] = data[i][colIndex]
 	}
 }
