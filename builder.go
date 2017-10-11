@@ -148,8 +148,7 @@ func (b *Builder) resolveFeatureEndpoints(feature *Feature) ([]string, error) {
 }
 
 // populateFeatureData returns string dumps of responses and an error if any
-func (b *Builder) populateFeatureData(feature *Feature) ([]string, error) {
-	client := &http.Client{}
+func (b *Builder) populateFeatureData(feature *Feature, client *http.Client) ([]string, error) {
 	responseDumps := make([]string, b.records)
 	endpoints, err := b.resolveFeatureEndpoints(feature)
 	if err != nil {
@@ -181,13 +180,7 @@ func (b *Builder) populateFeatureData(feature *Feature) ([]string, error) {
 }
 
 // Run Builder to aggregate all features and manage concurrent operations
-func (b *Builder) Run() error {
-	// flag.Parse()
-
-	// Set noSave to true for any features listed in the call
-	// for _, i := range ignoredFeatures {
-	// 	b.GetFeature(i).noSave = true
-	// }
+func (b *Builder) Run(client *http.Client) error {
 
 	for _, feature := range b.featureMap {
 		parents, err := feature.getParentNames()
@@ -203,7 +196,7 @@ func (b *Builder) Run() error {
 			}
 
 			parsedResponses := make([]string, b.records)
-			parsedResponses, populateError = b.populateFeatureData(feature)
+			parsedResponses, populateError = b.populateFeatureData(feature, client)
 
 			output := feature.RunFunc(parsedResponses)
 			b.addFeatureData(feature.Name, output)
