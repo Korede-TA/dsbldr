@@ -40,7 +40,7 @@ func readStringColumn(values *[]string, columnName string, data [][]string) {
 			colIndex = i
 			break
 		}
-		if i == len(data) {
+		if i == (len(data[0]) - 1) {
 			noMatch = true
 		}
 	}
@@ -50,6 +50,7 @@ func readStringColumn(values *[]string, columnName string, data [][]string) {
 			(*values)[i-1] = ""
 			continue
 		}
-		(*values)[i-1] = data[i][colIndex]
+		val := data[i][colIndex]
+		(*values)[i-1] = val
 	}
 }

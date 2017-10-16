@@ -36,7 +36,7 @@ func (b *Builder) addFeatureData(featureName string, values []string) error {
 }
 
 func (b *Builder) getFeatureData(featureName string) []string {
-	items := make([]string, b.records-1)
+	items := make([]string, b.records)
 	if _, ok := b.featureMap[featureName]; ok {
 		readStringColumn(&items, featureName, b.data)
 		return items

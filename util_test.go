@@ -93,3 +93,21 @@ func TestReadStringColumn(t *testing.T) {
 		t.Fatalf("got: %v\n want: %v\n ", got, want)
 	}
 }
+
+func TestReadStringColumnWithNoHeader(t *testing.T) {
+	data := [][]string{
+		[]string{"a", "b", "c"},
+		[]string{"a", "b", "c"},
+		[]string{"a", "b", "c"},
+		[]string{"a", "b", "c"},
+	}
+	colName := "d"
+	values := make([]string, 3)
+
+	want := []string{"", "", ""}
+	readStringColumn(&values, colName, data)
+
+	if got := values; !reflect.DeepEqual(got, want) {
+		t.Fatalf("got: %v\n want: %v\n ", got, want)
+	}
+}
