@@ -31,14 +31,14 @@ func NewBuilder(featureCount, recordCount int) *Builder {
 }
 
 func (b *Builder) addFeatureData(featureName string, values []string) error {
-	writeStringColumn(&b.data, featureName, values)
+	writeStringColumn(b.data, featureName, values)
 	return nil
 }
 
 func (b *Builder) getFeatureData(featureName string) []string {
 	items := make([]string, b.records)
 	if _, ok := b.featureMap[featureName]; ok {
-		readStringColumn(&items, featureName, b.data)
+		readStringColumn(items, featureName, b.data)
 		return items
 	}
 	return items

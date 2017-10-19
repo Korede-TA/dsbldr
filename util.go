@@ -16,23 +16,23 @@ func BasicOAuthHeader(consumerKey, nonce, signature, signatureMethod,
 		consumerKey, nonce, signature, signatureMethod, timestamp, token)
 }
 
-func writeStringColumn(data *[][]string, columnName string, values []string) {
+func writeStringColumn(data [][]string, columnName string, values []string) {
 	var colIndex int
-	for i := range (*data)[0] {
+	for i := range data[0] {
 		// Find first empty column or column with same header to overwrite
-		if (*data)[0][i] == "" || (*data)[0][i] == columnName {
+		if data[0][i] == "" || data[0][i] == columnName {
 			colIndex = i
-			(*data)[0][i] = columnName
+			data[0][i] = columnName
 			break
 		}
 	}
 	// Add all the values as well (remember that Builder.data is pre-allocated)
-	for i := 1; i < len(*data); i++ {
-		(*data)[i][colIndex] = values[i-1]
+	for i := 1; i < len(data); i++ {
+		data[i][colIndex] = values[i-1]
 	}
 }
 
-func readStringColumn(values *[]string, columnName string, data [][]string) {
+func readStringColumn(values []string, columnName string, data [][]string) {
 	var colIndex int
 	noMatch := false
 	for i := range data[0] {
@@ -47,10 +47,10 @@ func readStringColumn(values *[]string, columnName string, data [][]string) {
 	// Add all the values as well (remember that Builder.data is pre-allocated)
 	for i := 1; i < len(data); i++ {
 		if noMatch {
-			(*values)[i-1] = ""
+			values[i-1] = ""
 			continue
 		}
 		val := data[i][colIndex]
-		(*values)[i-1] = val
+		values[i-1] = val
 	}
 }

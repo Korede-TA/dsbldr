@@ -40,7 +40,7 @@ func TestWriteStringColumn(t *testing.T) {
 	colName := "c"
 	values := []string{"c", "c", "c"}
 
-	writeStringColumn(&data, colName, values)
+	writeStringColumn(data, colName, values)
 	want := [][]string{
 		[]string{"a", "b", "c"},
 		[]string{"a", "b", "c"},
@@ -63,7 +63,7 @@ func TestWriteStringColumnOverwrite(t *testing.T) {
 	colName := "c"
 	values := []string{"c", "c", "c"}
 
-	writeStringColumn(&data, colName, values)
+	writeStringColumn(data, colName, values)
 	want := [][]string{
 		[]string{"a", "b", "c"},
 		[]string{"a", "b", "c"},
@@ -87,7 +87,7 @@ func TestReadStringColumn(t *testing.T) {
 	values := make([]string, 3)
 
 	want := []string{"c", "c", "c"}
-	readStringColumn(&values, colName, data)
+	readStringColumn(values, colName, data)
 
 	if got := values; !reflect.DeepEqual(got, want) {
 		t.Fatalf("got: %v\n want: %v\n ", got, want)
@@ -105,7 +105,7 @@ func TestReadStringColumnWithNoHeader(t *testing.T) {
 	values := make([]string, 3)
 
 	want := []string{"", "", ""}
-	readStringColumn(&values, colName, data)
+	readStringColumn(values, colName, data)
 
 	if got := values; !reflect.DeepEqual(got, want) {
 		t.Fatalf("got: %v\n want: %v\n ", got, want)
