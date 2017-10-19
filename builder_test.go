@@ -171,16 +171,15 @@ func TestResolveFeatureEndpoints(t *testing.T) {
 // 	b := NewBuilder(4, 3)
 // }
 
-type fakeHTTPClient struct{}
+type fakeHTTPClient http.Client
 
-func (fhc *fakeHTTPClient) Do(http.Request) {
-
+func (fhc *fakeHTTPClient) Do(http.Request) (*http.Response, error) {
+	return &http.Response{
+		Status:     "200 OK",
+		StatusCode: 200,
+	}, nil
 }
 
 func TestPopulateFeatureData(t *testing.T) {
 
 }
-
-// func TestGetFeatureData(t *testing.T) {
-// 	b := NewBuilder(4, 3)
-// }
