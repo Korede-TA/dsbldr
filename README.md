@@ -14,7 +14,8 @@ To be totally honest, I'm very new to the Machine Learning space but I've been l
 
 ## TODO
 - [x] Top level Feature-based API
-- [ ] Concurrency stuff using Goroutines, channels and all that fun stuff
+- [x] Concurrency stuff using Goroutines, channels and all that fun stuff
+- [ ] Caching operations to prevent repeated requests
 - [ ] Saving functionality for different data formats
     - [x] CSV
     - [ ] JSON
