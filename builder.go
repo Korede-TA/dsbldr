@@ -80,7 +80,7 @@ func (b *Builder) Save(writer csv.Writer) error {
 	return nil
 }
 
-// SaveIf daves records only if they evaluate to true
+// SaveIf saves records only if they evaluate to true
 func (b *Builder) SaveIf(writer csv.Writer, saveCond func(r []string) bool) error {
 	for i := range b.data {
 		if saveCond(b.data[i]) {
@@ -147,8 +147,12 @@ func (b *Builder) resolveFeatureEndpoints(feature *Feature) ([]string, error) {
 	return endpoints, nil
 }
 
+type endpointClient interface {
+	Do(req http.Request) (*http.Response, error)
+}
+
 // populateFeatureData returns string dumps of responses and an error if any
-func (b *Builder) populateFeatureData(feature *Feature, client *http.Client) ([]string, error) {
+func (b *Builder) populateFeatureData(feature *Feature, client endpointClient) ([]string, error) {
 	responseDumps := make([]string, b.records)
 	endpoints, err := b.resolveFeatureEndpoints(feature)
 	if err != nil {
@@ -162,7 +166,7 @@ func (b *Builder) populateFeatureData(feature *Feature, client *http.Client) ([]
 			return nil, err
 		}
 
-		resp, err := client.Do(req)
+		resp, err := client.Do(*req)
 		if err != nil {
 			return nil, err
 		}
@@ -180,7 +184,7 @@ func (b *Builder) populateFeatureData(feature *Feature, client *http.Client) ([]
 }
 
 // Run Builder to aggregate all features and manage concurrent operations
-func (b *Builder) Run(client *http.Client) error {
+func (b *Builder) Run(client endpointClient) error {
 
 	for _, feature := range b.featureMap {
 		parents, err := feature.getParentNames()
@@ -201,7 +205,7 @@ func (b *Builder) Run(client *http.Client) error {
 			output := feature.RunFunc(parsedResponses)
 			b.addFeatureData(feature.Name, output)
 
-			feature.finished <- true // Mark feature as true
+			feature.finished <- true // Write to feature.finished channel
 			close(feature.finished)
 		}(feature)
 
