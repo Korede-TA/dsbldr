@@ -1,6 +1,8 @@
 package dsbldr
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -54,7 +56,9 @@ func TestGetFeatureData(t *testing.T) {
 		Name:     "feat1",
 		Endpoint: "/endpoint1/",
 	}
-	b := NewBuilder(4, 3)
+	// Note that the test fails when there is a greater featureCount
+	// than there are features when builder.getFeatureData is called
+	b := NewBuilder(1, 3)
 	data := []string{"one", "two", "three"}
 
 	t.Log(b.data)
@@ -171,15 +175,45 @@ func TestResolveFeatureEndpoints(t *testing.T) {
 // 	b := NewBuilder(4, 3)
 // }
 
-type fakeHTTPClient http.Client
+type fakeHttpClient struct{}
 
-func (fhc *fakeHTTPClient) Do(http.Request) (*http.Response, error) {
+var fakeResponseDump string = `
+{
+	id: 1000
+	id_str: "1000"
+	text: "this is a young tweet; tweety tweet tweet"
+}
+`
+
+func (fhc *fakeHttpClient) Do(req http.Request) (*http.Response, error) {
 	return &http.Response{
 		Status:     "200 OK",
 		StatusCode: 200,
+		Body:       ioutil.NopCloser(bytes.NewBufferString(fakeResponseDump)),
 	}, nil
 }
 
 func TestPopulateFeatureData(t *testing.T) {
+	b := NewBuilder(2, 3)
+	fakeClient := fakeHttpClient{}
+	b.BaseURL = "baseurl.com"
+	f := &Feature{
+		Name:     "f1",
+		Endpoint: "/endpoint",
+		RunFunc: func(res []string) []string {
+			return []string{"one", "two", "three"}
+		},
+	}
+
+	got, err := b.populateFeatureData(f, &fakeClient)
+	if err != nil {
+		t.Errorf("Error Occured: %v", err)
+	}
+	if want := fakeResponseDump; got[0] != want {
+		t.Fatalf("got: %v\n want: %v\n", got, want)
+	}
+}
+
+func TestRun(t *testing.T) {
 
 }
