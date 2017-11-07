@@ -185,7 +185,7 @@ var fakeResponseDump string = `
 }
 `
 
-func (fhc *fakeHttpClient) Do(req http.Request) (*http.Response, error) {
+func (fhc fakeHttpClient) Do(req http.Request) (*http.Response, error) {
 	return &http.Response{
 		Status:     "200 OK",
 		StatusCode: 200,
@@ -194,7 +194,7 @@ func (fhc *fakeHttpClient) Do(req http.Request) (*http.Response, error) {
 }
 
 func TestPopulateFeatureData(t *testing.T) {
-	b := NewBuilder(2, 3)
+	b := NewBuilder(1, 3)
 	fakeClient := fakeHttpClient{}
 	b.BaseURL = "baseurl.com"
 	f := &Feature{
@@ -215,5 +215,27 @@ func TestPopulateFeatureData(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
-
+	b := NewBuilder(2, 3)
+	fakeClient := fakeHttpClient{}
+	b.BaseURL = "baseurl.com"
+	f1 := &Feature{
+		Name:     "f1",
+		Endpoint: "/endpoint",
+		RunFunc: func(res []string) []string {
+			return []string{"one", "two", "three"}
+		},
+	}
+	f2 := &Feature{
+		Name:     "f2",
+		Endpoint: "/endpoint2",
+		RunFunc: func(res []string) []string {
+			return []string{"one", "two", "three"}
+		},
+	}
+	b.AddFeatures(f1, f2)
+	err := b.Run(fakeClient)
+	if err != nil {
+		t.Errorf("Error Occured: %v", err)
+	}
+	t.Log(b.data)
 }
