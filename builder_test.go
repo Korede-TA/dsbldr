@@ -61,9 +61,9 @@ func TestGetFeatureData(t *testing.T) {
 	b := NewBuilder(1, 3)
 	data := []string{"one", "two", "three"}
 
-	t.Log(b.data)
+	b.AddFeatures(f)
 	err := b.addFeatureData(f.Name, data)
-	t.Log(b.data)
+
 	if err != nil {
 		t.Errorf("Error Occured: %v", err)
 	}
@@ -215,6 +215,7 @@ func TestPopulateFeatureData(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
+	t.Logf("TestRun started")
 	b := NewBuilder(2, 3)
 	fakeClient := fakeHttpClient{}
 	b.BaseURL = "baseurl.com"

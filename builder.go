@@ -41,6 +41,7 @@ func (b *Builder) getFeatureData(featureName string) []string {
 		readStringColumn(items, featureName, b.data)
 		return items
 	}
+	// readStringColumn(items, featureName, b.data)
 	return items
 }
 
@@ -51,6 +52,7 @@ func (b *Builder) GetFeature(name string) *Feature {
 		feat = val
 		return feat
 	}
+	// err := errors.New("No such Feature in builder")
 	return feat
 }
 
@@ -80,7 +82,7 @@ func (b *Builder) Save(writer csv.Writer) error {
 	return nil
 }
 
-// SaveIf saves records only if they evaluate to true
+// SaveIf saves records only if saveCond evaluate to true
 func (b *Builder) SaveIf(writer csv.Writer, saveCond func(r []string) bool) error {
 	for i := range b.data {
 		if saveCond(b.data[i]) {
