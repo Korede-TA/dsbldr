@@ -8,25 +8,35 @@ import (
 
 // Builder is main type for this tool.
 type Builder struct {
-	BaseURL        string
-	RequestHeaders map[string]string // Custom Request Headers including auth
-	featureMap     map[string]*Feature
-	data           [][]string // Strings of Data to be read in to CSV
-	records        int        // Number of records to be retrieved for dataset
+	BaseURL    string
+	featureMap map[string]*Feature
+	data       [][]string // Strings of Data to be read in to CSV
+	records    int        // Number of records to be retrieved for dataset
+
+	// Some fields for auth credentials
+	authUsername string
+	authPassword string
 }
 
 // NewBuilder creates new Builder struct
-func NewBuilder(featureCount, recordCount int) *Builder {
+func NewBuilder(featureCount, recordCount int, options ...func(*Builder)) *Builder {
 	// Add extra row for header
 	preallocatedData := make([][]string, recordCount+1)
 	for i := range preallocatedData {
 		preallocatedData[i] = make([]string, featureCount)
 	}
 	return &Builder{
-		RequestHeaders: make(map[string]string),
-		featureMap:     make(map[string]*Feature),
-		data:           preallocatedData,
-		records:        recordCount,
+		featureMap: make(map[string]*Feature),
+		data:       preallocatedData,
+		records:    recordCount,
+	}
+}
+
+// WithBasicAuth is a Builder option that adds a username and password for Basic API authentication
+func WithBasicAuth(username, password string) {
+	return func(b *Builder) {
+		b.authUsername = username
+		b.authPassword = password
 	}
 }
 
@@ -118,6 +128,11 @@ func (b *Builder) createRequest(
 	req, err := http.NewRequest("GET", b.BaseURL+endpoint, nil)
 	if err != nil {
 		return nil, err
+	}
+
+	// only add this if the auth credentials are set by an option
+	if b.authUsername != "" && b.authPassword != "" {
+		req.SetBasicAuth(b.authUsername, b.authPassword)
 	}
 
 	for k, v := range headers {
