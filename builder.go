@@ -25,11 +25,17 @@ func NewBuilder(featureCount, recordCount int, options ...func(*Builder)) *Build
 	for i := range preallocatedData {
 		preallocatedData[i] = make([]string, featureCount)
 	}
-	return &Builder{
+	b := Builder{
 		featureMap: make(map[string]*Feature),
 		data:       preallocatedData,
 		records:    recordCount,
 	}
+
+	for _, option := range options {
+		option(&b)
+	}
+
+	return &b
 }
 
 // WithBasicAuth is a Builder option that adds a username and password for Basic API authentication
